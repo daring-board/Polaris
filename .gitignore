@@ -109,3 +109,6 @@ test_imgs/*.jpg
 
 # checkpoints
 checkpoints/*
+
+# upload
+uploads/*.jpg

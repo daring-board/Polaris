@@ -19,10 +19,6 @@ from keras.applications.inception_resnet_v2 import InceptionResNetV2
 from keras.models import Sequential
 from keras.utils import np_utils, Sequence
 
-
-def join_fn(dat):
-    return [dat[0]['image_id'], dat[0]['url'][0], dat[1]['label_id']]
-
 class FineTuning:
     '''
     CNNで学習を行う。(転移学習)
@@ -63,8 +59,8 @@ class FineTuning:
         tmp_model.add(Dense(self.num_classes, activation='softmax'))
 
         model = Model(input=self.base.input, output=tmp_model(self.base.output))
-        for layer in model.layers[:15]:
-            layer.trainable = False
+        # for layer in model.layers[:15]:
+        #     layer.trainable = False
         return model
 
 
@@ -77,6 +73,7 @@ if __name__=="__main__":
     label_dict = {
         'FATE': 0, 'HA': 1, 'HAGAREN': 2, 'MADOMAGI': 3, 'SAO': 4, 'TOARU': 5
     }
+    print(label_dict)
 
     f_list = []
     for dir in d_list:
