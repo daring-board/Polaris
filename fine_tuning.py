@@ -7,6 +7,7 @@ import datetime
 import random
 import requests
 import numpy as np
+import pandas as pd
 
 from keras.models import Sequential
 from keras.layers.convolutional import Conv2D
@@ -76,7 +77,7 @@ class FineTuning:
         return model
 
 class DataSequence(Sequence):
-    def __init__(self, kind, length, data_path):
+    def __init__(self, kind, length, data_path, label):
         self.kind = kind
         self.length = length
         self.data_file_path = data_path
@@ -86,14 +87,13 @@ class DataSequence(Sequence):
         for dir in d_list:
             for f in os.listdir(self.data_file_path+'/'+dir):
                 self.f_list.append(self.data_file_path+'/'+dir+'/'+f)
+        self.label = label
 
     def __getitem__(self, idx):
         warp = 30
         aug_time = 2
         datas, labels = [], []
-        label_dict = {
-            'FATE': 0, 'HA': 1, 'HAGAREN': 2, 'MADOMAGI': 3, 'SAO': 4, 'TOARU': 5
-        }
+        label_dict = self.label
 
         for f in random.sample(self.f_list, warp):
             img = cv2.imread(f)
@@ -110,7 +110,7 @@ class DataSequence(Sequence):
 
         datas = np.asarray(datas)
         labels = pd.DataFrame(labels)
-        labels = np_utils.to_categorical(labels, 6)
+        labels = np_utils.to_categorical(labels, len(label_dict))
         return datas, labels
 
     def __len__(self):
@@ -126,19 +126,20 @@ if __name__=="__main__":
     base_path = './Images'
     d_list = os.listdir(base_path)
     print(d_list)
+    label_dict = json.load(open('./model/category.json', 'r'))
 
     model_file_name = "funiture_cnn.h5"
 
     # モデル構築
-    ft = FineTuning(6, model)
+    ft = FineTuning(len(label_dict), model)
     model = ft.createNetwork()
     opt = ft.getOptimizer()
     model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
     model.summary()
 
     callbacks = [
-        ModelCheckpoint('./checkpoints/weights.{epoch:02d}-{loss:.2f}-{acc:.2f}-{val_loss:.2f}-{val_acc:.2f}.hdf5', verbose=1, save_weights_only=True, monitor='val_loss'),
-        # EarlyStopping(monitor='val_loss', patience=3, verbose=0, mode='auto'),
+        ModelCheckpoint('./model/checkpoints/weights.{epoch:02d}-{loss:.2f}-{acc:.2f}-{val_loss:.2f}-{val_acc:.2f}.hdf5', verbose=1, save_weights_only=True, monitor='val_loss'),
+        EarlyStopping(monitor='val_loss', patience=3, verbose=0, mode='auto'),
         ReduceLROnPlateau(factor=0.02, patience=1, verbose=1, cooldown=5, min_lr=1e-10),
         LambdaCallback(on_batch_begin=lambda batch, logs: print(' now: ',   datetime.datetime.now()))
     ]
@@ -147,8 +148,8 @@ if __name__=="__main__":
     # model.fit(datas, labels, batch_size=50, epochs=n_epoch, callbacks=callbacks, validation_split=0.1)
     step_size = 30
     file_all = 180
-    train_gen = DataSequence('train', file_all, base_path)
-    validate_gen = DataSequence('validate', file_all, base_path)
+    train_gen = DataSequence('train', file_all, base_path, label_dict)
+    validate_gen = DataSequence('validate', file_all, base_path, label_dict)
     model.fit_generator(
         train_gen,
         steps_per_epoch=3*int(file_all/step_size),

@@ -106,9 +106,15 @@ venv.bak/
 # img
 Images/*/*.jpg
 test_imgs/*.jpg
+Images/*/*.png
+test_imgs/*.png
+Images/*/*.jpeg
+Images/*/*.JPG
 
 # checkpoints
 checkpoints/*
+*.hdf5
+
 
 # upload
 uploads/*.jpg

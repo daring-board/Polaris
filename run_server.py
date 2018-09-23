@@ -1,4 +1,4 @@
-import cv2
+import cv2, json
 import numpy as np
 from flask import Flask, jsonify, request
 
@@ -8,21 +8,14 @@ app = Flask(__name__)
 UPLOAD_FOLDER = './uploads'
 
 model = None
-label_list = [
-    'FATE',
-    'HA',
-    'HAGAREN',
-    'MADOMAGI',
-    'SAO',
-    'TOARU'
-]
+label_list = list(json.load(open('./model/category.json', 'r')).keys())
 
 def loadModel():
     global model
     model_file_name = "funiture_cnn.h5"
-    ft = FineTuning(6, 'VGG16')
+    ft = FineTuning(len(label_list), 'VGG16')
     model = ft.createNetwork()
-    model.load_weights('checkpoints/weights.49-0.33-0.89-0.23-0.93.hdf5')
+    model.load_weights('./model/checkpoints/weights.49-0.33-0.89-0.23-0.93.hdf5')
 
 @app.route('/uploads', methods = ["POST"])
 def uploads():

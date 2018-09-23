@@ -59,8 +59,6 @@ class FineTuning:
         tmp_model.add(Dense(self.num_classes, activation='softmax'))
 
         model = Model(input=self.base.input, output=tmp_model(self.base.output))
-        # for layer in model.layers[:15]:
-        #     layer.trainable = False
         return model
 
 
@@ -70,9 +68,7 @@ if __name__=="__main__":
     print(d_list)
 
     datas, labels = [], []
-    label_dict = {
-        'FATE': 0, 'HA': 1, 'HAGAREN': 2, 'MADOMAGI': 3, 'SAO': 4, 'TOARU': 5
-    }
+    label_dict = json.load(open('./model/category.json', 'r'))
     print(label_dict)
 
     f_list = []
@@ -90,9 +86,9 @@ if __name__=="__main__":
     datas = np.asarray(datas)
 
     model_file_name = "funiture_cnn.h5"
-    ft = FineTuning(6, 'VGG16')
+    ft = FineTuning(len(label_dict), 'VGG16')
     model = ft.createNetwork()
-    model.load_weights('checkpoints/weights.49-0.33-0.89-0.23-0.93.hdf5')
+    model.load_weights('./model/checkpoints/weights.49-0.33-0.89-0.23-0.93.hdf5')
     pred_class = model.predict(datas)
 
     for idx in range(len(imgs)):
