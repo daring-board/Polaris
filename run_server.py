@@ -15,7 +15,7 @@ def loadModel():
     model_file_name = "funiture_cnn.h5"
     ft = FineTuning(len(label_list), 'VGG16')
     model = ft.createNetwork()
-    model.load_weights('./model/checkpoints/weights.49-0.33-0.89-0.23-0.93.hdf5')
+    model.load_weights('./model/checkpoints/weights.25-0.49-0.83-0.31-0.91.hdf5')
 
 @app.route('/uploads', methods = ["POST"])
 def uploads():

@@ -88,11 +88,14 @@ if __name__=="__main__":
     model_file_name = "funiture_cnn.h5"
     ft = FineTuning(len(label_dict), 'VGG16')
     model = ft.createNetwork()
-    model.load_weights('./model/checkpoints/weights.49-0.33-0.89-0.23-0.93.hdf5')
+    model.load_weights('./model/checkpoints/weights.08-0.09-0.97-0.05-0.98.hdf5')
     pred_class = model.predict(datas)
 
+    l_list = list(label_dict.keys())
     for idx in range(len(imgs)):
-        print(pred_class[idx])
+        for x in range(len(pred_class[idx])):
+            print('%s, %f'%(l_list[x], pred_class[idx][x]))
+        print()
         cv2.imshow('img_%d'%idx, imgs[idx])
         cv2.waitKey(0)
 

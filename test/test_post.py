@@ -3,7 +3,7 @@ import requests, json
 
 # main
 if __name__ == "__main__":
-    f_name = 'sao.jpg'
+    f_name = 'images_2.jpg'
     files = {'FILE': (f_name, open('test_imgs/%s'%f_name, 'rb'))}
 
     url = 'http://localhost:5000/uploads'
