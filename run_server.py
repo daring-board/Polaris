@@ -5,7 +5,7 @@ from flask import Flask, jsonify, request
 from pred_model import FineTuning
 
 app = Flask(__name__)
-UPLOAD_FOLDER = './uploads'
+UPLOAD_FOLDER = '/home/mahotox101500/Polaris/uploads'
 
 model = None
 label_list = list(json.load(open('./model/category.json', 'r')).keys())
@@ -15,7 +15,7 @@ def loadModel():
     model_file_name = "funiture_cnn.h5"
     ft = FineTuning(len(label_list), 'VGG16')
     model = ft.createNetwork()
-    model.load_weights('./model/checkpoints/weights.25-0.49-0.83-0.31-0.91.hdf5')
+    model.load_weights('./model/checkpoints/weights.09-0.09-0.97-0.03-0.99.hdf5')
 
 @app.route('/uploads', methods = ["POST"])
 def uploads():

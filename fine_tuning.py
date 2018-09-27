@@ -139,7 +139,7 @@ if __name__=="__main__":
 
     callbacks = [
         ModelCheckpoint('./model/checkpoints/weights.{epoch:02d}-{loss:.2f}-{acc:.2f}-{val_loss:.2f}-{val_acc:.2f}.hdf5', verbose=1, save_weights_only=True, monitor='val_loss'),
-        # EarlyStopping(monitor='val_loss', patience=3, verbose=0, mode='auto'),
+        EarlyStopping(monitor='val_loss', patience=3, verbose=0, mode='auto'),
         ReduceLROnPlateau(factor=0.02, patience=1, verbose=1, cooldown=5, min_lr=1e-10),
         LambdaCallback(on_batch_begin=lambda batch, logs: print(' now: ',   datetime.datetime.now()))
     ]
@@ -147,7 +147,7 @@ if __name__=="__main__":
     # fit model
     # model.fit(datas, labels, batch_size=50, epochs=n_epoch, callbacks=callbacks, validation_split=0.1)
     step_size = 30
-    file_all = 450
+    file_all = 570
     train_gen = DataSequence('train', file_all, base_path, label_dict)
     validate_gen = DataSequence('validate', file_all, base_path, label_dict)
     model.fit_generator(
