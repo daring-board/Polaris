@@ -10,6 +10,10 @@ UPLOAD_FOLDER = '/home/mahotox101500/Polaris/uploads'
 model = None
 label_list = list(json.load(open('./model/category.json', 'r')).keys())
 
+<<<<<<< HEAD
+=======
+global model
+>>>>>>> 5c1be898318a123165c98e9a5f7af3397f244ef8
 model_file_name = "funiture_cnn.h5"
 ft = FineTuning(len(label_list), 'VGG16')
 model = ft.createNetwork()
