@@ -17,8 +17,7 @@ graph = tf.get_default_graph()
 ft = FineTuning(len(label_list), 'VGG16')
 
 def load_model():
-    global graph
-    global model
+    global model, graph
     with graph.as_default():
         model = ft.createNetwork()
 
@@ -67,8 +66,7 @@ def save_img(f):
     return f_path
 
 def pred_org(f_path):
-    global model
-    global graph
+#    global model, graph
     datas = []
     img = cv2.imread(f_path)
     img = cv2.resize(img, (128, 128))
@@ -85,7 +83,7 @@ def pred_org(f_path):
             'data': ret
         })
 
-Thread(target=load_model, daemon=True).start()
 if __name__ == "__main__":
+    load_model()
     print(" * Flask starting server...")
     app.run()
