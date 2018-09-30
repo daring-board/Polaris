@@ -12,15 +12,16 @@ UPLOAD_FOLDER = './uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 label_list = list(json.load(open('./model/category.json', 'r')).keys())
+model = None
 graph = tf.get_default_graph()
 ft = FineTuning(len(label_list), 'VGG16')
-model = ft.createNetwork()
 
 def load_model():
     global graph
     global model
     with graph.as_default():
-        model.load_weights('./model/checkpoints/weights.07-0.36-0.89-0.17-0.95.hdf5')
+        model = ft.createNetwork()
+
 
 @app.route('/', methods = ["GET", "POST"])
 def root():
@@ -75,6 +76,7 @@ def pred_org(f_path):
     datas.append(img)
     datas = np.asarray(datas)
     with graph.as_default():
+        model.load_weights('./model/checkpoints/weights.07-0.36-0.89-0.17-0.95.hdf5')
         pred_class = model.predict(datas)
     ret = {label_list[idx]: float(pred_class[0][idx]) for idx in range(len(label_list))}
 
