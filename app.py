@@ -77,5 +77,6 @@ def pred_org(f_path):
         })
 
 if __name__ == "__main__":
+    load_model()
     print(" * Flask starting server...")
     app.run()
