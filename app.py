@@ -15,6 +15,12 @@ label_list = list(json.load(open('./model/category.json', 'r')).keys())
 graph = tf.get_default_graph()
 ft = FineTuning(len(label_list), 'VGG16')
 
+def load_model():
+    global graph, model
+    with graph.as_default():
+        model = ft.createNetwork()
+        model.load_weights('./model/checkpoints/weights.07-0.36-0.89-0.17-0.95.hdf5')
+
 @app.route('/', methods = ["GET", "POST"])
 def root():
     if request.method == 'GET':
@@ -24,10 +30,9 @@ def root():
         f_path = save_img(f)
         predict = pred_org(f_path).data.decode('utf-8')
         predict = json.loads(predict)['data']
-        predict = sorted(predict.items(), key=lambda x:-x[1])
         lines = ''
-        for item in predict[:3]:
-            lines += '%s: %.3f<BR>'%(item[0], item[1])
+        for key in predict.keys():
+            lines += '%s: %.3f<br/>'%(key, predict[key])
         path = os.path.join(app.config['UPLOAD_FOLDER'], f.filename)
         return render_template('index.html', filepath=path, context=lines)
 
@@ -58,7 +63,9 @@ def save_img(f):
     cv2.imwrite(f_path, img)
     return f_path
 
+
 def pred_org(f_path):
+    global model, graph
     datas = []
     img = cv2.imread(f_path)
     img = cv2.resize(img, (128, 128))
@@ -66,8 +73,6 @@ def pred_org(f_path):
     datas.append(img)
     datas = np.asarray(datas)
     with graph.as_default():
-        model = ft.createNetwork()
-        model.load_weights('./model/checkpoints/weights.07-0.36-0.89-0.17-0.95.hdf5')
         pred_class = model.predict(datas)
     ret = {label_list[idx]: float(pred_class[0][idx]) for idx in range(len(label_list))}
 
