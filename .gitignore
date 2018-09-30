@@ -117,7 +117,7 @@ Images/*/*.JPG
 checkpoints_*
 
 # upload
-uploads/*.jpg
+uploads/*
 
 # model
 model_*

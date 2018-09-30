@@ -30,9 +30,10 @@ def root():
         f_path = save_img(f)
         predict = pred_org(f_path).data.decode('utf-8')
         predict = json.loads(predict)['data']
+        predict = sorted(predict.items(), key=lambda x:-x[1])
         lines = ''
-        for key in predict.keys():
-            lines += '%s: %.3f<br/>'%(key, predict[key])
+        for item in predict[:3]:
+            lines += '%s: %.3f<br/>'%(item[0], item[1])
         path = os.path.join(app.config['UPLOAD_FOLDER'], f.filename)
         return render_template('index.html', filepath=path, context=lines)
 
