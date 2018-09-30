@@ -12,16 +12,8 @@ UPLOAD_FOLDER = './uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 label_list = list(json.load(open('./model/category.json', 'r')).keys())
-model = None
 graph = tf.get_default_graph()
 ft = FineTuning(len(label_list), 'VGG16')
-
-def load_model():
-    global graph
-    global model
-    with graph.as_default():
-        model = ft.createNetwork()
-
 
 @app.route('/', methods = ["GET", "POST"])
 def root():
@@ -67,8 +59,6 @@ def save_img(f):
     return f_path
 
 def pred_org(f_path):
-    global model
-    global graph
     datas = []
     img = cv2.imread(f_path)
     img = cv2.resize(img, (128, 128))
@@ -76,6 +66,7 @@ def pred_org(f_path):
     datas.append(img)
     datas = np.asarray(datas)
     with graph.as_default():
+        model = ft.createNetwork()
         model.load_weights('./model/checkpoints/weights.07-0.36-0.89-0.17-0.95.hdf5')
         pred_class = model.predict(datas)
     ret = {label_list[idx]: float(pred_class[0][idx]) for idx in range(len(label_list))}
@@ -85,7 +76,6 @@ def pred_org(f_path):
             'data': ret
         })
 
-Thread(target=load_model, daemon=True).start()
 if __name__ == "__main__":
     print(" * Flask starting server...")
     app.run()
