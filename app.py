@@ -66,7 +66,7 @@ def save_img(f):
 
 
 def pred_org(f_path):
-    global model, graph
+    global graph
     datas = []
     img = cv2.imread(f_path)
     img = cv2.resize(img, (128, 128))
