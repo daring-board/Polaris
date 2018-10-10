@@ -147,7 +147,7 @@ if __name__=="__main__":
     # fit model
     # model.fit(datas, labels, batch_size=50, epochs=n_epoch, callbacks=callbacks, validation_split=0.1)
     step_size = 30
-    file_all = 650
+    file_all = 720
     train_gen = DataSequence('train', file_all, base_path, label_dict)
     validate_gen = DataSequence('validate', file_all, base_path, label_dict)
     model.fit_generator(

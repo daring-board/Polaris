@@ -19,7 +19,7 @@ model = ft.createNetwork()
 def load_model():
     global graph, model
     with graph.as_default():
-        model.load_weights('./model/checkpoints/weights.07-0.36-0.89-0.17-0.95.hdf5')
+        model.load_weights('./model/checkpoints/weights.13-0.06-0.98-0.02-0.99.hdf5')
 
 @app.route('/', methods = ["GET", "POST"])
 def root():

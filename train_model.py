@@ -69,7 +69,7 @@ class DataSequence(Sequence):
         self.label = label
 
     def __getitem__(self, idx):
-        warp = 20
+        warp = 15
         aug_time = 2
         datas, labels = [], []
         label_dict = self.label
@@ -122,8 +122,8 @@ if __name__=="__main__":
     ]
 
     # fit model
-    step_size = 20
-    file_all = 180
+    step_size = 15
+    file_all = 720
     train_gen = DataSequence('train', file_all, base_path, label_dict)
     validate_gen = DataSequence('validate', file_all, base_path, label_dict)
     model.fit_generator(
