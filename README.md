@@ -14,3 +14,4 @@ yum groupinstall "Development Tools"
 * tensorflow
 * flask
 * matplotlib
+* Pillow
