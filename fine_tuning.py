@@ -67,7 +67,7 @@ class FineTuning:
         tmp_model.add(Dropout(0.5))
         tmp_model.add(Dense(self.num_classes, activation='softmax'))
 
-        model = Model(input=self.base.input, output=tmp_model(self.base.output))
+        model = Model(inputs=self.base.input, outputs=tmp_model(self.base.output))
         print(len(model.layers))
         for layer in model.layers[:12]:
              layer.trainable = False
@@ -128,7 +128,7 @@ if __name__=="__main__":
     print(d_list)
     label_dict = json.load(open('./model/category.json', 'r'))
 
-    model_file_name = "funiture_cnn.h5"
+    model_file_name = "model/funiture_cnn.h5"
 
     # モデル構築
     ft = FineTuning(len(label_dict), model)

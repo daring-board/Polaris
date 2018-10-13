@@ -6,10 +6,13 @@ from threading import Thread
 from keras.models import Sequential, load_model
 
 from pred_model import FineTuning
+import grade_cam as gc
 
 app = Flask(__name__)
 UPLOAD_FOLDER = './uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+HEATMAP_FOLDER = './generate/heatmap'
+app.config['HEATMAP_FOLDER'] = HEATMAP_FOLDER
 
 label_list = list(json.load(open('./model/category.json', 'r')).keys())
 graph = tf.get_default_graph()
@@ -19,7 +22,7 @@ model = ft.createNetwork()
 def load_model():
     global graph, model
     with graph.as_default():
-        model.load_weights('./model/checkpoints/weights.13-0.06-0.98-0.02-0.99.hdf5')
+        model.load_weights('./model/checkpoints/weights.17-0.03-0.99-0.02-0.99.hdf5')
 
 @app.route('/', methods = ["GET", "POST"])
 def root():
@@ -34,8 +37,13 @@ def root():
         lines = ''
         for item in predict[:3]:
             lines += '%s: %.3f<br/>'%(item[0], item[1])
-        path = os.path.join(app.config['UPLOAD_FOLDER'], f.filename)
-        return render_template('index.html', filepath=path, context=lines)
+        org_path = os.path.join(app.config['UPLOAD_FOLDER'], f.filename)
+        return render_template(
+                    'index.html',
+                    filepath=org_path,
+                    heatmapath=heatmap(f.filename),
+                    context=lines
+                )
 
 @app.route('/predict', methods = ["POST"])
 def uploads():
@@ -54,6 +62,10 @@ def uploads():
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@app.route('/generate/heatmap/<filename>')
+def heatmap_file(filename):
+    return send_from_directory(app.config['HEATMAP_FOLDER'], filename)
+
 def save_img(f):
     stream = f.stream
     print(f.filename)
@@ -63,7 +75,6 @@ def save_img(f):
     f_path = UPLOAD_FOLDER+'/'+f.filename
     cv2.imwrite(f_path, img)
     return f_path
-
 
 def pred_org(f_path):
     global graph
@@ -81,6 +92,18 @@ def pred_org(f_path):
             'status': 'OK',
             'data': ret
         })
+
+def heatmap(f_name):
+    global graph, model
+    f_path = UPLOAD_FOLDER+'/'+f_name
+    heatmap = HEATMAP_FOLDER+'/heatmap_'+f_name
+    with graph.as_default():
+        guided_model = gc.build_guided_model()
+        gradcam, gb, guided_gradcam = gc.compute_saliency(model, guided_model, layer_name='block5_conv3',
+                                         img_path=f_path, cls=-1, visualize=False, save=False)
+        cv2.imwrite(heatmap, gc.deprocess_image(guided_gradcam[0]))
+
+    return heatmap
 
 if __name__ == "__main__":
     load_model()

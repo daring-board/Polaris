@@ -118,6 +118,7 @@ checkpoints_*
 
 # upload
 uploads/*
+generate/heatmap/*
 
 # model
 model_*

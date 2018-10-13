@@ -88,7 +88,7 @@ if __name__=="__main__":
     model_file_name = "funiture_cnn.h5"
     ft = FineTuning(len(label_dict), 'VGG16')
     model = ft.createNetwork()
-    model.load_weights('./model/checkpoints/weights.13-0.06-0.98-0.02-0.99.hdf5')
+    model.load_weights('./model/checkpoints/weights.17-0.03-0.99-0.02-0.99.hdf5')
     pred_class = model.predict(datas)
 
     l_list = list(label_dict.keys())
