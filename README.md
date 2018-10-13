@@ -4,7 +4,6 @@
 yum install python36 python36-devel
 yum install libXext libSM libXrender
 yum groupinstall "Development Tools"
-yum install nginx
 
 ## Requirments
 * opencv-python
@@ -14,3 +13,4 @@ yum install nginx
 * keras
 * tensorflow
 * flask
+* matplotlib
