@@ -123,7 +123,7 @@ if __name__=="__main__":
 
     # fit model
     step_size = 15
-    file_all = 720
+    file_all = 800
     train_gen = DataSequence('train', file_all, base_path, label_dict)
     validate_gen = DataSequence('validate', file_all, base_path, label_dict)
     model.fit_generator(

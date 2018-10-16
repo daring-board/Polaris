@@ -76,6 +76,8 @@ class FineTuning:
         #         layer.trainable = False
         return model
 
+
+batch_size = 20
 class DataSequence(Sequence):
     def __init__(self, kind, length, data_path, label):
         self.kind = kind
@@ -90,7 +92,7 @@ class DataSequence(Sequence):
         self.label = label
 
     def __getitem__(self, idx):
-        warp = 30
+        warp = batch_size
         aug_time = 2
         datas, labels = [], []
         label_dict = self.label
@@ -146,8 +148,8 @@ if __name__=="__main__":
 
     # fit model
     # model.fit(datas, labels, batch_size=50, epochs=n_epoch, callbacks=callbacks, validation_split=0.1)
-    step_size = 30
-    file_all = 720
+    step_size = batch_size
+    file_all = 800
     train_gen = DataSequence('train', file_all, base_path, label_dict)
     validate_gen = DataSequence('validate', file_all, base_path, label_dict)
     model.fit_generator(
