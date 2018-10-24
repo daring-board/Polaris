@@ -26,7 +26,7 @@ def build_model():
     label_dict = json.load(open('./model/category.json', 'r'))
 
     # モデル構築
-    ft = FineTuning(len(label_dict), 'VGG16')
+    ft = FineTuning(len(label_dict))
     model = ft.createNetwork()
     model.load_weights('./model/checkpoints/weights.21-0.02-0.99-0.01-1.00.hdf5')
     model.summary()

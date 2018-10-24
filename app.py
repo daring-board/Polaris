@@ -16,7 +16,7 @@ app.config['HEATMAP_FOLDER'] = HEATMAP_FOLDER
 
 label_list = list(json.load(open('./model/category.json', 'r')).keys())
 graph = tf.get_default_graph()
-ft = FineTuning(len(label_list), 'VGG16')
+ft = FineTuning(len(label_list))
 model = ft.createNetwork()
 
 def load_model():

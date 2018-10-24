@@ -32,29 +32,14 @@ class FineTuning:
     Avable base_model is
         VGG16, DenseNet201, ResNet50
     '''
-    def __init__(self, num_classes, base_model):
+    def __init__(self, num_classes):
         self.num_classes = num_classes
-        self.shape = (128, 128, 3)
+        self.shape = (224, 224, 3)
         self.input_tensor = Input(shape=self.shape)
-        self.base_model = base_model
-        if base_model == 'VGG16':
-            self.base = VGG16(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
-        elif base_model == 'DenseNet121':
-            self.base = DenseNet121(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
-        else:
-            self.base = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
-            # self.base = ResNet50(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
+        self.base = VGG16(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
 
     def getOptimizer(self):
-        if self.base_model == 'VGG16':
-            # opt = SGD(lr=1e-6, momentum=0.9)
-            opt = Adam(lr=1e-4)
-        elif self.base_model == 'DenseNet121':
-            opt = SGD(lr=1e-6, momentum=0.9)
-            # opt = Adam(lr=1e-4)
-        else:
-            # opt = SGD(lr=1e-6)
-            opt = Adam(lr=1e-4)
+        opt = Adam(lr=1e-4)
         return opt
 
     '''
@@ -71,9 +56,6 @@ class FineTuning:
         print(len(model.layers))
         for layer in model.layers[:12]:
              layer.trainable = False
-        # for layer in model.layers[:139]: # default 179
-        #     if 'BatchNormalization' not in str(layer):
-        #         layer.trainable = False
         return model
 
 
@@ -99,7 +81,7 @@ class DataSequence(Sequence):
 
         for f in random.sample(self.f_list, warp):
             img = cv2.imread(f)
-            img = cv2.resize(img, (128, 128))
+            img = cv2.resize(img, (224, 224))
             img = img.astype(np.float32) / 255.0
             datas.append(img)
             label = f.split('/')[2].split('_')[1]
@@ -123,7 +105,6 @@ class DataSequence(Sequence):
         pass
 
 if __name__=="__main__":
-    model = sys.argv[1]
 
     base_path = './Images'
     d_list = os.listdir(base_path)
@@ -133,7 +114,7 @@ if __name__=="__main__":
     model_file_name = "model/funiture_cnn.h5"
 
     # モデル構築
-    ft = FineTuning(len(label_dict), model)
+    ft = FineTuning(len(label_dict))
     model = ft.createNetwork()
     opt = ft.getOptimizer()
     model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
