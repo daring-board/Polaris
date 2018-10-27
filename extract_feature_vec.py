@@ -3,32 +3,26 @@ import os
 import numpy as np
 import pandas as pd
 import cv2, json
+import configparser
+
 from matplotlib import pyplot as plt
 from keras import backend as K
 from keras.preprocessing import image
 from keras.applications.vgg16 import VGG16, preprocess_input, decode_predictions
 from keras.models import load_model, Model
-
 import tensorflow as tf
 from tensorflow.python.framework import ops
 
 from fine_tuning import FineTuning
 
 # Define model here ---------------------------------------------------
-def build_model():
-    """Function returning keras model instance.
-
-    Model can be
-     - Trained here
-     - Loaded with load_model
-     - Loaded from keras.applications
-    """
-    label_dict = json.load(open('./model/category.json', 'r'))
+def build_model(config):
+    label_dict = json.load(open(config['PATH']['category'], 'r'))
 
     # モデル構築
     ft = FineTuning(len(label_dict))
     model = ft.createNetwork()
-    model.load_weights('./model/checkpoints/weights.21-0.02-0.99-0.01-1.00.hdf5')
+    model.load_weights(config['PATH']['use_chkpnt'])
     model.summary()
 
     tmp = model.layers[-1]
@@ -37,10 +31,14 @@ def build_model():
     return [model1, model2]
 
 if __name__=="__main__":
-    base_path = './Images'
+    ''' 設定ファイルの読み込み '''
+    config = configparser.ConfigParser()
+    config.read('./model/config.ini')
+
+    base_path = config['PATH']['img']
     d_list = os.listdir(base_path)
 
-    models = build_model()
+    models = build_model(config)
 
     for d_name in d_list:
         imgs, paths = [], []
@@ -50,7 +48,7 @@ if __name__=="__main__":
             if f_name == 'empty': continue
             f = d_path + '/' + f_name
             img = cv2.imread(f)
-            img = cv2.resize(img, (128, 128))
+            img = cv2.resize(img, (config['PARAM']['width'], config['PARAM']['height']))
             img = img.astype(np.float32) / 255.0
             imgs.append(img)
             paths.append(f)

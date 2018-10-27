@@ -3,18 +3,23 @@ import numpy as np
 from flask import Flask, jsonify, request, render_template, redirect, url_for, send_from_directory
 import tensorflow as tf
 from threading import Thread
+import configparser
 from keras.models import Sequential, load_model
 
 from pred_model import FineTuning
 import grade_cam as gc
 
+''' 設定ファイルの読み込み '''
+config = configparser.ConfigParser()
+config.read('./model/config.ini')
+
 app = Flask(__name__)
-UPLOAD_FOLDER = './uploads'
+UPLOAD_FOLDER = config['PATH']['upload']
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-HEATMAP_FOLDER = './generate/heatmap'
+HEATMAP_FOLDER = config['PATH']['heatmap']
 app.config['HEATMAP_FOLDER'] = HEATMAP_FOLDER
 
-label_list = list(json.load(open('./model/category.json', 'r')).keys())
+label_list = list(json.load(open(config['PATH']['category'], 'r')).keys())
 graph = tf.get_default_graph()
 ft = FineTuning(len(label_list))
 model = ft.createNetwork()
@@ -22,7 +27,7 @@ model = ft.createNetwork()
 def load_model():
     global graph, model
     with graph.as_default():
-        model.load_weights('./model/checkpoints/weights.21-0.02-0.99-0.01-1.00.hdf5')
+        model.load_weights(config['PATH']['use_chkpnt'])
 
 @app.route('/', methods = ["GET", "POST"])
 def root():
@@ -80,7 +85,7 @@ def pred_org(f_path):
     global graph
     datas = []
     img = cv2.imread(f_path)
-    img = cv2.resize(img, (128, 128))
+    img = cv2.resize(img, (config['PARAM']['width'], config['PARAM']['height']))
     img = img.astype(np.float32) / 255.0
     datas.append(img)
     datas = np.asarray(datas)

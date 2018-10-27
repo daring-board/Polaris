@@ -8,6 +8,7 @@ import random
 import requests
 import numpy as np
 import pandas as pd
+import configparser
 
 from keras.models import Sequential
 from keras.layers.convolutional import Conv2D
@@ -32,9 +33,13 @@ class FineTuning:
     Avable base_model is
         VGG16, DenseNet201, ResNet50
     '''
-    def __init__(self, num_classes):
+    def __init__(self, config, num_classes):
         self.num_classes = num_classes
-        self.shape = (128, 128, 3)
+        self.shape = (
+                    int(config['PARAM']['width']),
+                    int(config['PARAM']['height']),
+                    int(config['PARAM']['channel'])
+                    )
         self.input_tensor = Input(shape=self.shape)
         self.base = VGG16(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
 
@@ -48,20 +53,21 @@ class FineTuning:
     def createNetwork(self):
         tmp_model = Sequential()
         tmp_model.add(Flatten(input_shape=self.base.output_shape[1:]))
-        tmp_model.add(Dense(256, activation='relu'))
-        tmp_model.add(Dropout(0.5))
+        tmp_model.add(Dense(1024, activation='relu'))
+        tmp_model.add(Dropout(0.25))
+        tmp_model.add(Dense(512, activation='relu'))
         tmp_model.add(Dense(self.num_classes, activation='softmax'))
 
         model = Model(inputs=self.base.input, outputs=tmp_model(self.base.output))
         print(len(model.layers))
-        for layer in model.layers[:12]:
+        for layer in model.layers[:15]:
              layer.trainable = False
         return model
 
 
-batch_size = 20
 class DataSequence(Sequence):
-    def __init__(self, kind, length, data_path, label):
+    def __init__(self, config, kind, length, data_path, label):
+        self.batch = int(config['PARAM']['batch'])
         self.kind = kind
         self.length = length
         self.data_file_path = data_path
@@ -74,23 +80,24 @@ class DataSequence(Sequence):
         self.label = label
 
     def __getitem__(self, idx):
-        warp = batch_size
+        warp = self.batch
         aug_time = 2
         datas, labels = [], []
         label_dict = self.label
+        size = (int(config['PARAM']['width']), int(config['PARAM']['height']))
 
         for f in random.sample(self.f_list, warp):
             img = cv2.imread(f)
-            img = cv2.resize(img, (224, 224))
+            img = cv2.resize(img, size)
             img = img.astype(np.float32) / 255.0
             datas.append(img)
             label = f.split('/')[2].split('_')[1]
             labels.append(label_dict[label])
             # Augmentation image
-            for num in range(aug_time):
-                tmp = self.datagen.random_transform(img)
-                datas.append(tmp)
-                labels.append(label_dict[label])
+            # for num in range(aug_time):
+            #     tmp = self.datagen.random_transform(img)
+            #     datas.append(tmp)
+            #     labels.append(label_dict[label])
 
         datas = np.asarray(datas)
         labels = pd.DataFrame(labels)
@@ -106,33 +113,36 @@ class DataSequence(Sequence):
 
 if __name__=="__main__":
 
-    base_path = './Images'
+    ''' 設定ファイルの読み込み '''
+    config = configparser.ConfigParser()
+    config.read('./model/config.ini')
+
+    base_path = config['PATH']['img']
     d_list = os.listdir(base_path)
     print(d_list)
-    label_dict = json.load(open('./model/category.json', 'r'))
+    label_dict = json.load(open(config['PATH']['category'], 'r'))
 
     model_file_name = "model/funiture_cnn.h5"
 
     # モデル構築
-    ft = FineTuning(len(label_dict))
+    ft = FineTuning(config, len(label_dict))
     model = ft.createNetwork()
     opt = ft.getOptimizer()
     model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
     model.summary()
 
     callbacks = [
-        ModelCheckpoint('./model/checkpoints/weights.{epoch:02d}-{loss:.2f}-{acc:.2f}-{val_loss:.2f}-{val_acc:.2f}.hdf5', verbose=1, save_weights_only=True, monitor='val_loss'),
+        ModelCheckpoint(config['PATH']['chkpnt'], verbose=1, save_weights_only=True, monitor='val_loss'),
         EarlyStopping(monitor='val_loss', patience=3, verbose=0, mode='auto'),
         ReduceLROnPlateau(factor=0.02, patience=1, verbose=1, cooldown=5, min_lr=1e-10),
         LambdaCallback(on_batch_begin=lambda batch, logs: print(' now: ',   datetime.datetime.now()))
     ]
 
     # fit model
-    # model.fit(datas, labels, batch_size=50, epochs=n_epoch, callbacks=callbacks, validation_split=0.1)
-    step_size = batch_size
-    file_all = 800
-    train_gen = DataSequence('train', file_all, base_path, label_dict)
-    validate_gen = DataSequence('validate', file_all, base_path, label_dict)
+    step_size = int(config['PARAM']['batch'])
+    file_all = 1070
+    train_gen = DataSequence(config, 'train', file_all, base_path, label_dict)
+    validate_gen = DataSequence(config, 'validate', file_all, base_path, label_dict)
     model.fit_generator(
         train_gen,
         steps_per_epoch=3*int(file_all/step_size),

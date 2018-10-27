@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 import cv2, json
+import configparser
 from matplotlib import pyplot as plt
 from keras import backend as K
 from keras.preprocessing import image
@@ -13,7 +14,7 @@ from tensorflow.python.framework import ops
 from fine_tuning import FineTuning
 
 # Define model here ---------------------------------------------------
-def build_model():
+def build_model(config):
     """Function returning keras model instance.
 
     Model can be
@@ -21,15 +22,15 @@ def build_model():
      - Loaded with load_model
      - Loaded from keras.applications
     """
-    label_dict = json.load(open('./model/category.json', 'r'))
+    label_dict = json.load(open(config['PATH']['category'], 'r'))
 
     # モデル構築
     ft = FineTuning(len(label_dict))
     model = ft.createNetwork()
-    model.load_weights('./model/checkpoints/weights.21-0.02-0.99-0.01-1.00.hdf5')
+    model.load_weights(config['PATH']['use_chkpnt'])
     return model
 
-H, W = 128, 128 # Input shape, defined by the model (model.input_shape)
+H, W = 224, 224 # Input shape, defined by the model (model.input_shape)
 # ---------------------------------------------------------------------
 
 def load_image(path, preprocess=True):
@@ -71,7 +72,7 @@ def normalize(x):
     return (x + 1e-10) / (K.sqrt(K.mean(K.square(x))) + 1e-10)
 
 
-def build_guided_model():
+def build_guided_model(config):
     """Function returning modified model.
 
     Changes gradient function for all ReLu activations
@@ -86,7 +87,7 @@ def build_guided_model():
 
     g = tf.get_default_graph()
     with g.gradient_override_map({'Relu': 'GuidedBackProp'}):
-        new_model = build_model()
+        new_model = build_model(config)
     return new_model
 
 
@@ -189,8 +190,12 @@ def compute_saliency(model, guided_model, img_path, layer_name='block5_conv3', c
     return gradcam, gb, guided_gradcam
 
 if __name__ == '__main__':
-    model = build_model()
-    guided_model = build_guided_model()
+    ''' 設定ファイルの読み込み '''
+    config = configparser.ConfigParser()
+    config.read('./model/config.ini')
+
+    model = build_model(config)
+    guided_model = build_guided_model(config)
     base_path = 'test_imgs/'
     for f_name in os.listdir(base_path):
         img_path = base_path + f_name

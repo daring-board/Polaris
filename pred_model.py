@@ -7,6 +7,7 @@ import random
 import requests
 import numpy as np
 import pandas as pd
+import configparser
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model, Model
@@ -22,12 +23,16 @@ from keras.utils import np_utils, Sequence
 from fine_tuning import FineTuning
 
 if __name__=="__main__":
+    ''' 設定ファイルの読み込み '''
+    config = configparser.ConfigParser()
+    config.read('./model/config.ini')
+
     base_path = './test_imgs'
     d_list = os.listdir(base_path)
     print(d_list)
 
     datas, labels = [], []
-    label_dict = json.load(open('./model/category.json', 'r'))
+    label_dict = json.load(open(config['PATH']['category'], 'r'))
     print(label_dict)
 
     f_list = []
@@ -38,7 +43,7 @@ if __name__=="__main__":
     for f in f_list:
         img = cv2.imread(f)
         imgs.append(img)
-        img = cv2.resize(img, (128, 128))
+        img = cv2.resize(img, (config['PARAM']['width'], config['PARAM']['height']))
         img = img.astype(np.float32) / 255.0
         datas.append(img)
 
@@ -47,7 +52,7 @@ if __name__=="__main__":
     model_file_name = "funiture_cnn.h5"
     ft = FineTuning(len(label_dict))
     model = ft.createNetwork()
-    model.load_weights('./model/checkpoints/weights.17-0.03-0.99-0.02-0.99.hdf5')
+    model.load_weights(config['PARAM']['use_chkpnt'])
     pred_class = model.predict(datas)
 
     l_list = list(label_dict.keys())
