@@ -34,7 +34,7 @@ class FineTuning:
     '''
     def __init__(self, num_classes):
         self.num_classes = num_classes
-        self.shape = (224, 224, 3)
+        self.shape = (128, 128, 3)
         self.input_tensor = Input(shape=self.shape)
         self.base = VGG16(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
 
