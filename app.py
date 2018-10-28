@@ -114,7 +114,7 @@ def heatmap(f_name):
         jetcam = cv2.applyColorMap(np.uint8(255 * gradcam), cv2.COLORMAP_JET)
         jetcam = (np.float32(jetcam) + gc.load_image(f_path, preprocess=False)) / 2
         cv2.imwrite(heatmap, np.uint8(jetcam))
-
+    del guided_model
     return heatmap
 
 if __name__ == "__main__":
