@@ -20,7 +20,7 @@ def build_model(config):
     label_dict = json.load(open(config['PATH']['category'], 'r'))
 
     # モデル構築
-    ft = FineTuning(len(label_dict))
+    ft = FineTuning(config, len(label_dict))
     model = ft.createNetwork()
     model.load_weights(config['PATH']['use_chkpnt'])
     model.summary()
@@ -35,6 +35,8 @@ if __name__=="__main__":
     config = configparser.ConfigParser()
     config.read('./model/config.ini')
 
+    size = (int(config['PARAM']['width']), int(config['PARAM']['height']))
+
     base_path = config['PATH']['img']
     d_list = os.listdir(base_path)
 
@@ -48,7 +50,7 @@ if __name__=="__main__":
             if f_name == 'empty': continue
             f = d_path + '/' + f_name
             img = cv2.imread(f)
-            img = cv2.resize(img, (config['PARAM']['width'], config['PARAM']['height']))
+            img = cv2.resize(img, size)
             img = img.astype(np.float32) / 255.0
             imgs.append(img)
             paths.append(f)

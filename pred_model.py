@@ -27,7 +27,7 @@ if __name__=="__main__":
     config = configparser.ConfigParser()
     config.read('./model/config.ini')
 
-    base_path = './test_imgs'
+    base_path = './Img_test'
     d_list = os.listdir(base_path)
     print(d_list)
 
@@ -43,16 +43,16 @@ if __name__=="__main__":
     for f in f_list:
         img = cv2.imread(f)
         imgs.append(img)
-        img = cv2.resize(img, (config['PARAM']['width'], config['PARAM']['height']))
+        img = cv2.resize(img, (int(config['PARAM']['width']), int(config['PARAM']['height'])))
         img = img.astype(np.float32) / 255.0
         datas.append(img)
 
     datas = np.asarray(datas)
 
     model_file_name = "funiture_cnn.h5"
-    ft = FineTuning(len(label_dict))
+    ft = FineTuning(config, len(label_dict))
     model = ft.createNetwork()
-    model.load_weights(config['PARAM']['use_chkpnt'])
+    model.load_weights(config['PATH']['use_chkpnt'])
     pred_class = model.predict(datas)
 
     l_list = list(label_dict.keys())

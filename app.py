@@ -106,7 +106,10 @@ def heatmap(f_name):
         guided_model = gc.build_guided_model()
         gradcam, gb, guided_gradcam = gc.compute_saliency(model, guided_model, layer_name='block5_conv3',
                                          img_path=f_path, cls=-1, visualize=False, save=False)
-        cv2.imwrite(heatmap, gc.deprocess_image(guided_gradcam[0]))
+        # cv2.imwrite(heatmap, gc.deprocess_image(guided_gradcam[0]))
+        jetcam = cv2.applyColorMap(np.uint8(255 * gradcam), cv2.COLORMAP_JET)
+        jetcam = (np.float32(jetcam) + gc.load_image(f_path, preprocess=False)) / 2
+        cv2.imwrite(heatmap, np.uint8(jetcam))
 
     return heatmap
 
