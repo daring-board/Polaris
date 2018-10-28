@@ -25,7 +25,7 @@ def build_model(config):
     label_dict = json.load(open(config['PATH']['category'], 'r'))
 
     # モデル構築
-    ft = FineTuning(len(label_dict))
+    ft = FineTuning(config, len(label_dict))
     model = ft.createNetwork()
     model.load_weights(config['PATH']['use_chkpnt'])
     return model

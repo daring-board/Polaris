@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja">
+    <head>
+    <meta charset="UTF-8">
+    <title>コスプレ判定システム</title>
+    <meta name="description" content="コスプレの良さを判定する判定器">
+    </head>
    <body>
       {% if context %}
         <IMG SRC="{{filepath}}" width="200" height="200" BORDER="1"><BR>
@@ -17,5 +22,12 @@
          <input type = "file" name = "FILE" />
          <input type = "submit"/>
       </form>
+      <BR>
+    　■判定できるコスプレの種類<BR>
+      <ul >
+        {% for name in categorys %}
+          <li><p>{{name}}</p></li>
+        {% endfor %}
+      </ul>
    </body>
 </html>

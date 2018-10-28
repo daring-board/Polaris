@@ -20,8 +20,9 @@ HEATMAP_FOLDER = config['PATH']['heatmap']
 app.config['HEATMAP_FOLDER'] = HEATMAP_FOLDER
 
 label_list = list(json.load(open(config['PATH']['category'], 'r')).keys())
+name_dict = json.load(open(config['PATH']['name'], 'r', encoding="utf-8"))
 graph = tf.get_default_graph()
-ft = FineTuning(len(label_list))
+ft = FineTuning(config, len(label_list))
 model = ft.createNetwork()
 
 def load_model():
@@ -31,8 +32,9 @@ def load_model():
 
 @app.route('/', methods = ["GET", "POST"])
 def root():
+    c_names = [name_dict[key] for key in name_dict.keys()]
     if request.method == 'GET':
-        return render_template('index.html')
+        return render_template('index.html', categorys=c_names)
     elif request.method == "POST":
         f = request.files['FILE']
         f_path = save_img(f)
@@ -41,13 +43,14 @@ def root():
         predict = sorted(predict.items(), key=lambda x:-x[1])
         lines = ''
         for item in predict[:3]:
-            lines += '%s: %.3f<br/>'%(item[0], item[1])
+            lines += '%s: %.3f<br/>'%(name_dict[item[0]], item[1])
         org_path = os.path.join(app.config['UPLOAD_FOLDER'], f.filename)
         return render_template(
                     'index.html',
                     filepath=org_path,
                     heatmapath=heatmap(f.filename),
-                    context=lines
+                    context=lines,
+                    categorys=c_names
                 )
 
 @app.route('/predict', methods = ["POST"])
@@ -84,8 +87,9 @@ def save_img(f):
 def pred_org(f_path):
     global graph
     datas = []
+    size = (int(config['PARAM']['width']), int(config['PARAM']['height']))
     img = cv2.imread(f_path)
-    img = cv2.resize(img, (config['PARAM']['width'], config['PARAM']['height']))
+    img = cv2.resize(img, size)
     img = img.astype(np.float32) / 255.0
     datas.append(img)
     datas = np.asarray(datas)
@@ -103,7 +107,7 @@ def heatmap(f_name):
     f_path = UPLOAD_FOLDER+'/'+f_name
     heatmap = HEATMAP_FOLDER+'/heatmap_'+f_name
     with graph.as_default():
-        guided_model = gc.build_guided_model()
+        guided_model = gc.build_guided_model(config)
         gradcam, gb, guided_gradcam = gc.compute_saliency(model, guided_model, layer_name='block5_conv3',
                                          img_path=f_path, cls=-1, visualize=False, save=False)
         # cv2.imwrite(heatmap, gc.deprocess_image(guided_gradcam[0]))
