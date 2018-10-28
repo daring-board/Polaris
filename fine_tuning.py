@@ -71,7 +71,12 @@ class DataSequence(Sequence):
         self.kind = kind
         self.length = length
         self.data_file_path = data_path
-        self.datagen = ImageDataGenerator(horizontal_flip=True, zoom_range=0.5)
+        self.datagen = ImageDataGenerator(
+                            rotation_range=20,
+                            width_shift_range=0.2,
+                            height_shift_range=0.2,
+                            zoom_range=0.3
+                        )
         d_list = os.listdir(self.data_file_path)
         self.f_list = []
         for dir in d_list:
@@ -81,7 +86,7 @@ class DataSequence(Sequence):
 
     def __getitem__(self, idx):
         warp = self.batch
-        aug_time = 2
+        aug_time = 3
         datas, labels = [], []
         label_dict = self.label
         size = (int(config['PARAM']['width']), int(config['PARAM']['height']))
@@ -94,10 +99,10 @@ class DataSequence(Sequence):
             label = f.split('/')[2].split('_')[1]
             labels.append(label_dict[label])
             # Augmentation image
-            # for num in range(aug_time):
-            #     tmp = self.datagen.random_transform(img)
-            #     datas.append(tmp)
-            #     labels.append(label_dict[label])
+            for num in range(aug_time):
+                tmp = self.datagen.random_transform(img)
+                datas.append(tmp)
+                labels.append(label_dict[label])
 
         datas = np.asarray(datas)
         labels = pd.DataFrame(labels)
@@ -145,10 +150,10 @@ if __name__=="__main__":
     validate_gen = DataSequence(config, 'validate', file_all, base_path, label_dict)
     model.fit_generator(
         train_gen,
-        steps_per_epoch=3*int(file_all/step_size),
+        steps_per_epoch=4*int(file_all/step_size),
         epochs=300,
         validation_data=validate_gen,
-        validation_steps=int(file_all/step_size),
+        validation_steps=2*int(file_all/step_size),
         callbacks=callbacks
         )
 
