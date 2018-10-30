@@ -153,7 +153,7 @@ if __name__=="__main__":
         steps_per_epoch=4*int(file_all/step_size),
         epochs=300,
         validation_data=validate_gen,
-        validation_steps=2*int(file_all/step_size),
+        validation_steps=4*step_size,
         callbacks=callbacks
         )
 
