@@ -86,7 +86,6 @@ def save_img(f):
     return f_path
 
 def pred_org(f_path):
-    global graph
     datas = []
     size = (int(config['PARAM']['width']), int(config['PARAM']['height']))
     img = cv2.imread(f_path)
@@ -104,7 +103,6 @@ def pred_org(f_path):
         })
 
 def heatmap(f_name):
-    global graph, model
     f_path = UPLOAD_FOLDER+'/'+f_name
     heatmap = HEATMAP_FOLDER+'/heatmap_'+f_name
     with graph.as_default():
