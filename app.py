@@ -54,6 +54,10 @@ def root():
                     categorys=c_names
                 )
 
+@app.route('/ar')
+def ar():
+    return render_template('ar.html')
+
 @app.route('/predict', methods = ["POST"])
 def uploads():
     if request.method == "POST":
