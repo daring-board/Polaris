@@ -124,4 +124,4 @@ def heatmap(f_name):
 if __name__ == "__main__":
     load_model()
     print(" * Flask starting server...")
-    app.run(host='0.0.0.0',port=5000)
+    app.run(host='0.0.0.0',port=80)
