@@ -25,6 +25,7 @@ from keras.applications.vgg16 import VGG16
 from keras.applications.densenet import DenseNet201, DenseNet121
 from keras.applications.resnet50 import ResNet50
 from keras.applications.inception_resnet_v2 import InceptionResNetV2
+from keras.applications.inception_v3 import InceptionV3
 from keras.preprocessing.image import ImageDataGenerator
 
 class FineTuning:
@@ -41,7 +42,8 @@ class FineTuning:
                     int(config['PARAM']['channel'])
                     )
         self.input_tensor = Input(shape=self.shape)
-        self.base = VGG16(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
+        # self.base = VGG16(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
+        self.base = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
 
     def getOptimizer(self):
         opt = Adam(lr=1e-4)
@@ -60,7 +62,7 @@ class FineTuning:
 
         model = Model(inputs=self.base.input, outputs=tmp_model(self.base.output))
         print(len(model.layers))
-        for layer in model.layers[:15]:
+        for layer in self.base.layers[:-4]:
              layer.trainable = False
         return model
 

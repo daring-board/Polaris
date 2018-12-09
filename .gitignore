@@ -111,6 +111,7 @@ Images/*/*.png
 test_imgs/*.png
 Images/*/*.jpeg
 Images/*/*.JPG
+Img*/*
 
 # checkpoints
 */checkpoints/*
