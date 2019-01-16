@@ -42,8 +42,8 @@ class FineTuning:
                     int(config['PARAM']['channel'])
                     )
         self.input_tensor = Input(shape=self.shape)
-        # self.base = VGG16(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
-        self.base = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
+        self.base = VGG16(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
+        # self.base = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
 
     def getOptimizer(self):
         opt = Adam(lr=1e-4)
@@ -141,7 +141,6 @@ if __name__=="__main__":
     callbacks = [
         ModelCheckpoint(config['PATH']['chkpnt'], verbose=1, save_weights_only=True, monitor='val_loss'),
         EarlyStopping(monitor='val_loss', patience=3, verbose=0, mode='auto'),
-        ReduceLROnPlateau(factor=0.02, patience=1, verbose=1, cooldown=5, min_lr=1e-10),
         LambdaCallback(on_batch_begin=lambda batch, logs: print(' now: ',   datetime.datetime.now()))
     ]
 

@@ -123,3 +123,4 @@ generate/heatmap/*
 
 # model
 model_*
+*.h5
