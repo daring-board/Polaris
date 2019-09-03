@@ -10,13 +10,9 @@ import pandas as pd
 import configparser
 
 from keras.preprocessing.image import ImageDataGenerator
-from keras.models import load_model, Model
+from tensorflow.keras.models import load_model, Model
 from keras.layers.core import Dense, Activation, Dropout, Flatten
 from keras.layers import Input
-from keras.applications.vgg16 import VGG16
-from keras.applications.densenet import DenseNet201
-from keras.applications.resnet50 import ResNet50
-from keras.applications.inception_resnet_v2 import InceptionResNetV2
 from keras.models import Sequential
 from keras.utils import np_utils, Sequence
 
@@ -49,10 +45,11 @@ if __name__=="__main__":
 
     datas = np.asarray(datas)
 
-    model_file_name = "funiture_cnn.h5"
+    model_file_name = './model/models/polaris_custum_model.h5'
     ft = FineTuning(config, len(label_dict))
     model = ft.createNetwork()
-    model.load_weights(config['PATH']['use_chkpnt'])
+    model.load_weights(model_file_name)
+    # model = load_model('./model/models/polaris_custum_model.h5')
     pred_class = model.predict(datas)
 
     l_list = list(label_dict.keys())

@@ -10,8 +10,9 @@ import numpy as np
 import pandas as pd
 import configparser
 
+from keras import regularizers
 from keras.models import Sequential
-from keras.layers.convolutional import Conv2D
+from keras.layers import GlobalAveragePooling2D, BatchNormalization
 from keras.layers.pooling import MaxPooling2D
 from keras.optimizers import Adam, SGD
 
@@ -24,6 +25,8 @@ from keras.models import load_model, Model
 from keras.applications.vgg16 import VGG16
 from keras.applications.densenet import DenseNet201, DenseNet121
 from keras.applications.resnet50 import ResNet50
+from keras.applications.mobilenet_v2 import MobileNetV2
+from keras.applications.mobilenet import MobileNet
 from keras.applications.inception_resnet_v2 import InceptionResNetV2
 from keras.applications.inception_v3 import InceptionV3
 from keras.preprocessing.image import ImageDataGenerator
@@ -42,8 +45,10 @@ class FineTuning:
                     int(config['PARAM']['channel'])
                     )
         self.input_tensor = Input(shape=self.shape)
-        self.base = VGG16(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
+        # self.base = VGG16(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
         # self.base = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
+        # self.base_model = MobileNetV2(weights='imagenet', include_top=False, input_tensor=self.input_tensor)
+        self.base_model = MobileNet(weights='imagenet', include_top=False, input_tensor=self.input_tensor)
 
     def getOptimizer(self):
         opt = Adam(lr=1e-4)
@@ -53,17 +58,20 @@ class FineTuning:
     Networkを定義する
     '''
     def createNetwork(self):
-        tmp_model = Sequential()
-        tmp_model.add(Flatten(input_shape=self.base.output_shape[1:]))
-        tmp_model.add(Dense(1024, activation='relu'))
-        tmp_model.add(Dropout(0.25))
-        tmp_model.add(Dense(512, activation='relu'))
-        tmp_model.add(Dense(self.num_classes, activation='softmax'))
+        added_layer = GlobalAveragePooling2D()(self.base_model.output)
+        added_layer = Dense(1024, kernel_regularizer=regularizers.l2(0.01))(added_layer)
+        added_layer = BatchNormalization()(added_layer)
+        added_layer = Activation('relu')(added_layer)
+        added_layer = Dense(512, kernel_regularizer=regularizers.l2(0.01))(added_layer)
+        added_layer = BatchNormalization()(added_layer)
+        added_layer = Activation('relu')(added_layer)
+        added_layer = Dense(self.num_classes, activation='softmax', name='classification')(added_layer)
 
-        model = Model(inputs=self.base.input, outputs=tmp_model(self.base.output))
-        print(len(model.layers))
-        for layer in self.base.layers[:-4]:
-             layer.trainable = False
+        '''
+        base_modelと転移学習用レイヤーを結合
+        '''
+        model = Model(inputs=self.base_model.input, outputs=added_layer)
+
         return model
 
 
