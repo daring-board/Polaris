@@ -121,6 +121,7 @@ checkpoints_*
 # upload
 uploads/*
 generate/heatmap/*
+generate/predict/*
 
 # model
 model_*
