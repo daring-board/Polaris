@@ -7,7 +7,7 @@ from threading import Thread
 import configparser
 from keras.models import Sequential, load_model
 from mtcnn.mtcnn import MTCNN
-from pred_model import FineTuning
+from fine_tuning import FineTuning
 
 ''' 設定ファイルの読み込み '''
 config = configparser.ConfigParser()

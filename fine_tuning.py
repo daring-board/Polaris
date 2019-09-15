@@ -5,7 +5,7 @@ import sys
 import json
 import datetime
 import random
-import requests
+# import requests
 import numpy as np
 import pandas as pd
 import configparser
