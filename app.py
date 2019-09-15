@@ -6,9 +6,8 @@ import tensorflow as tf
 from threading import Thread
 import configparser
 from keras.models import Sequential, load_model
-
+from mtcnn.mtcnn import MTCNN
 from pred_model import FineTuning
-import grade_cam as gcam
 
 ''' 設定ファイルの読み込み '''
 config = configparser.ConfigParser()
@@ -17,14 +16,15 @@ config.read('./model/config.ini')
 app = Flask(__name__)
 UPLOAD_FOLDER = config['PATH']['upload']
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-HEATMAP_FOLDER = config['PATH']['heatmap']
-app.config['HEATMAP_FOLDER'] = HEATMAP_FOLDER
+PREDICT_FOLDER = config['PATH']['generate']
+app.config['PREDICT_FOLDER'] = PREDICT_FOLDER
 
-label_list = list(json.load(open(config['PATH']['category'], 'r')).keys())
-name_dict = json.load(open(config['PATH']['name'], 'r', encoding="utf-8"))
+label_list = json.load(open(config['PATH']['category'], 'r'))
+labels = {int(k): v for k, v in label_list.items()}
 graph = tf.get_default_graph()
-ft = FineTuning(config, len(label_list))
-model = ft.createNetwork()
+ft = FineTuning()
+model = ft.createModel(label_list)
+detector = MTCNN()
 
 def load_model():
     global graph, model
@@ -33,30 +33,17 @@ def load_model():
 
 @app.route('/', methods = ["GET", "POST"])
 def root():
-    c_names = [name_dict[key] for key in name_dict.keys()]
     if request.method == 'GET':
-        return render_template('index.html', categorys=c_names)
+        return render_template('index.html')
     elif request.method == "POST":
         f = request.files['FILE']
         f_path = save_img(f)
-        predict = pred_org(f_path).data.decode('utf-8')
-        predict = json.loads(predict)['data']
-        predict = sorted(predict.items(), key=lambda x:-x[1])
-        lines = ''
-        for item in predict[:3]:
-            lines += '%s: %.3f<br/>'%(name_dict[item[0]], item[1])
-        org_path = os.path.join(app.config['UPLOAD_FOLDER'], f.filename)
+        predict = json.loads(pred_org(f_path, f.filename).data.decode('utf-8'))
+        print(predict)
         return render_template(
                     'index.html',
-                    filepath=org_path,
-                    heatmapath=heatmap(f.filename),
-                    context=lines,
-                    categorys=c_names
+                    filepath=predict['path'],
                 )
-
-@app.route('/ar')
-def ar():
-    return render_template('ar.html')
 
 @app.route('/predict', methods = ["POST"])
 def uploads():
@@ -75,9 +62,9 @@ def uploads():
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-@app.route('/generate/heatmap/<filename>')
-def heatmap_file(filename):
-    return send_from_directory(app.config['HEATMAP_FOLDER'], filename)
+@app.route('/generate/predict/<filename>')
+def generated_file(filename):
+    return send_from_directory(app.config['PREDICT_FOLDER'], filename)
 
 def save_img(f):
     stream = f.stream
@@ -89,39 +76,45 @@ def save_img(f):
     cv2.imwrite(f_path, img)
     return f_path
 
-def pred_org(f_path):
+def pred_org(f_path, filename):
     datas = []
     size = (int(config['PARAM']['width']), int(config['PARAM']['height']))
     img = cv2.imread(f_path)
-    img = cv2.resize(img, size)
-    img = img.astype(np.float32) / 255.0
-    datas.append(img)
-    datas = np.asarray(datas)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    results = detector.detect_faces(img)
+    faces, bb = [], []
+    for idx, item in enumerate(results):
+        x1, y1, width, height = item['box']
+        tmp = img[y1: y1+height, x1: x1+width,:]
+        tmp = cv2.resize(tmp, (160, 160))
+        tmp = tmp.astype(np.float32) / 255.0
+        faces.append(tmp)
+        bb.append(item['box'])
+    faces = np.asarray(faces)
+
     with graph.as_default():
-        pred_class = model.predict(datas)
-    ret = {label_list[idx]: float(pred_class[0][idx]) for idx in range(len(label_list))}
+        predict = model.predict(faces)
+
+    for idx, p in enumerate(predict):
+        print(labels[np.argmax(p)])
+        print(p)
+        if max(p) < 0.2: continue
+        x1, y1, width, height = bb[idx]
+        cv2.rectangle(img, (x1,y1), (x1+width, y1+height), (255, 0, 0), 2)
+        cv2.putText(img, labels[np.argmax(p)], (x1, y1+10),
+            cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255), 1, cv2.LINE_AA)
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+    path = PREDICT_FOLDER+'/'+filename
+    cv2.imwrite(path, img)
 
     return jsonify({
             'status': 'OK',
-            'data': ret
+            'path': path
         })
-
-def heatmap(f_name):
-    f_path = UPLOAD_FOLDER+'/'+f_name
-    heatmap = HEATMAP_FOLDER+'/heatmap_'+f_name
-    with graph.as_default():
-        guided_model = gcam.build_guided_model(config)
-        gradcam, gb, guided_gradcam = gcam.compute_saliency(model, guided_model, layer_name='block5_conv3',
-                                         img_path=f_path, cls=-1, visualize=False, save=False)
-        # cv2.imwrite(heatmap, gcam.deprocess_image(guided_gradcam[0]))
-        jetcam = cv2.applyColorMap(np.uint8(255 * gradcam), cv2.COLORMAP_JET)
-        jetcam = (np.float32(jetcam) + gcam.load_image(f_path, preprocess=False)) / 2
-        cv2.imwrite(heatmap, np.uint8(jetcam))
-    del guided_model
-    gc.collect()
-    return heatmap
 
 if __name__ == "__main__":
     load_model()
     print(" * Flask starting server...")
-    app.run(host='0.0.0.0',port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)

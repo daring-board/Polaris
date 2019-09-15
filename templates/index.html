@@ -2,19 +2,13 @@
 <html lang="ja">
     <head>
     <meta charset="UTF-8">
-    <title>コスプレ判定システム</title>
-    <meta name="description" content="コスプレの良さを判定する判定器">
+    <title>関ジャニ検出システム</title>
+    <meta name="description" content="関ジャニ検出">
     </head>
    <body>
-      {% if context %}
+      {% if filepath %}
+        検出結果<BR>
         <IMG SRC="{{filepath}}" width="200" height="200" BORDER="1"><BR>
-        コスプレ判定：<BR>
-        {% autoescape false %}
-          {{context}}
-        {% endautoescape %}<BR>
-        こんなところに注目しています。↓<BR>
-        <IMG SRC="{{heatmapath}}" width="200" height="200" BORDER="1"><BR>
-        <HR>
       {% endif %}
       ファイルを選択して送信してください<BR>
       <form action = "./" method = "POST"
@@ -23,12 +17,5 @@
          <input type = "submit"/>
       </form>
       <BR>
-    　■判定できるコスプレの種類<BR>
-      <ul >
-        {% for name in categorys %}
-          <li><p>{{name}}</p></li>
-        {% endfor %}
-      </ul>
-      <input type="button" onclick="location.href='./ar'" value="遷移">
    </body>
 </html>

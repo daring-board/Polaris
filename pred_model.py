@@ -28,7 +28,7 @@ if __name__=="__main__":
     print(d_list)
 
     datas, labels = [], []
-    label_dict = json.load(open(config['PATH']['category'], 'r'))
+    label_dict = json.load(open('./model/models_eight/polaris_labels.json', 'r'))
     print(label_dict)
 
     f_list = []
@@ -45,7 +45,8 @@ if __name__=="__main__":
 
     datas = np.asarray(datas)
 
-    model_file_name = './model/models/polaris_custum_model.h5'
+    # model_file_name = './model/models/polaris_custum_model.h5'
+    model_file_name = './model/models_eight/polaris_xception_model.h5'
     ft = FineTuning(config, len(label_dict))
     model = ft.createNetwork()
     model.load_weights(model_file_name)

@@ -29,48 +29,39 @@ from keras.applications.mobilenet_v2 import MobileNetV2
 from keras.applications.mobilenet import MobileNet
 from keras.applications.inception_resnet_v2 import InceptionResNetV2
 from keras.applications.inception_v3 import InceptionV3
+from keras.applications.xception import Xception
 from keras.preprocessing.image import ImageDataGenerator
 
 class FineTuning:
-    '''
-    CNNで学習を行う。(転移学習)
-    Avable base_model is
-        VGG16, DenseNet201, ResNet50
-    '''
-    def __init__(self, config, num_classes):
-        self.num_classes = num_classes
-        self.shape = (
-                    int(config['PARAM']['width']),
-                    int(config['PARAM']['height']),
-                    int(config['PARAM']['channel'])
-                    )
-        self.input_tensor = Input(shape=self.shape)
-        # self.base = VGG16(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
-        # self.base = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
-        # self.base_model = MobileNetV2(weights='imagenet', include_top=False, input_tensor=self.input_tensor)
-        self.base_model = MobileNet(weights='imagenet', include_top=False, input_tensor=self.input_tensor)
+    def __init__(self):
+        '''
+        学習済みモデルのロード(base_model)
+        '''
+        model_path = './model/facenet_keras.h5'
+        self.base_model = load_model(model_path)
 
-    def getOptimizer(self):
-        opt = Adam(lr=1e-4)
-        return opt
-
-    '''
-    Networkを定義する
-    '''
-    def createNetwork(self):
-        added_layer = GlobalAveragePooling2D()(self.base_model.output)
+    def createModel(self, label_dict):
+        '''
+        転移学習用のレイヤーを追加
+        '''
+        added_layer = GlobalAveragePooling2D()(self.base_model.layers[-5].output)
         added_layer = Dense(1024, kernel_regularizer=regularizers.l2(0.01))(added_layer)
         added_layer = BatchNormalization()(added_layer)
         added_layer = Activation('relu')(added_layer)
-        added_layer = Dense(512, kernel_regularizer=regularizers.l2(0.01))(added_layer)
-        added_layer = BatchNormalization()(added_layer)
-        added_layer = Activation('relu')(added_layer)
-        added_layer = Dense(self.num_classes, activation='softmax', name='classification')(added_layer)
+        added_layer = Dense(len(label_dict), activation='softmax', name='classification')(added_layer)
 
         '''
         base_modelと転移学習用レイヤーを結合
         '''
         model = Model(inputs=self.base_model.input, outputs=added_layer)
+
+        '''
+        base_modelのモデルパラメタは学習させない。
+        (added_layerのモデルパラメタだけを学習させる)
+        '''
+        for layer in self.base_model.layers:
+            layer.trainable = False
+        model.summary()
 
         return model
 

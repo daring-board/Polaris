@@ -112,6 +112,7 @@ test_imgs/*.png
 Images/*/*.jpeg
 Images/*/*.JPG
 Img*/*
+Images_*/*
 
 # checkpoints
 */checkpoints/*
