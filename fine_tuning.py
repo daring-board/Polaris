@@ -45,7 +45,7 @@ class FineTuning:
         転移学習用のレイヤーを追加
         '''
         added_layer = GlobalAveragePooling2D()(self.base_model.layers[-5].output)
-        added_layer = Dense(1024, kernel_regularizer=regularizers.l2(0.01))(added_layer)
+        added_layer = Dense(512, kernel_regularizer=regularizers.l2(0.01))(added_layer)
         added_layer = BatchNormalization()(added_layer)
         added_layer = Activation('relu')(added_layer)
         added_layer = Dense(len(label_dict), activation='softmax', name='classification')(added_layer)
