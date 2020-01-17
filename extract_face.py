@@ -1,7 +1,7 @@
-import os
+import os, cv2
 from mtcnn.mtcnn import MTCNN
-base_path = '/content/drive/My Drive/share/kanjani/YY/'
-dist_path = '/content/drive/My Drive/share/kanjani/resultYY/'
+base_path = './test/images/src/'
+dist_path = './test/images/dist/'
 f_list = os.listdir(base_path)
 
 detector = MTCNN()

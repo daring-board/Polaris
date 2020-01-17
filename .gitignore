@@ -125,4 +125,7 @@ generate/predict/*
 
 # model
 model_*
-# *.h5
+*.h5
+Extract/*
+test/images/*
+

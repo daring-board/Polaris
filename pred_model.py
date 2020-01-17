@@ -2,64 +2,50 @@
 import os
 import cv2
 import sys
-import json
+import json, pickle
 import random
 import requests
 import numpy as np
 import pandas as pd
 import configparser
 
-from keras.preprocessing.image import ImageDataGenerator
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.models import load_model, Model
-from keras.layers.core import Dense, Activation, Dropout, Flatten
-from keras.layers import Input
-from keras.models import Sequential
-from keras.utils import np_utils, Sequence
 
 from fine_tuning import FineTuning
+
+def cos_sim(v1, v2):
+    norm = np.linalg.norm(v1) * np.linalg.norm(v2)
+    norm = 1 if norm == 0 else norm
+    return np.dot(v1, v2) / norm
 
 if __name__=="__main__":
     ''' 設定ファイルの読み込み '''
     config = configparser.ConfigParser()
     config.read('./model/config.ini')
 
-    base_path = './Img_test'
+    base_path = './Extract/'
     d_list = os.listdir(base_path)
     print(d_list)
 
-    datas, labels = [], []
-    label_dict = json.load(open('./model/models_eight/polaris_labels.json', 'r'))
+    label_dict = pickle.load(open('./model/polaris_labels.pkl','rb'))
+    label_dict = {v: k for k, v in label_dict.items()}
     print(label_dict)
 
     f_list = []
-    for dir in d_list:
-        f_list.append(base_path+'/'+dir)
+    for d in d_list:
+        for f in os.listdir(base_path+d):
+            f_list.append(base_path+d+'/'+f)
 
-    imgs = []
+    model_file_name = './model/polaris_facenet_model.h5'
+    model = tf.keras.models.load_model(model_file_name, compile=False)
+    
     for f in f_list:
-        img = cv2.imread(f)
-        imgs.append(img)
+        print(f)
+        img = cv2.imread(f)                
         img = cv2.resize(img, (int(config['PARAM']['width']), int(config['PARAM']['height'])))
         img = img.astype(np.float32) / 255.0
-        datas.append(img)
-
-    datas = np.asarray(datas)
-
-    # model_file_name = './model/models/polaris_custum_model.h5'
-    model_file_name = './model/models_eight/polaris_xception_model.h5'
-    ft = FineTuning(config, len(label_dict))
-    model = ft.createNetwork()
-    model.load_weights(model_file_name)
-    # model = load_model('./model/models/polaris_custum_model.h5')
-    pred_class = model.predict(datas)
-
-    l_list = list(label_dict.keys())
-    for idx in range(len(imgs)):
-        for x in range(len(pred_class[idx])):
-            print('%s, %f'%(l_list[x], pred_class[idx][x]))
-        print()
-        cv2.imshow('img_%d'%idx, imgs[idx])
-        cv2.waitKey(0)
-
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+        predict = model.predict(img[None])
+        num = np.argmax(predict[0])
+        print(label_dict[num])

@@ -1,11 +1,10 @@
-import cv2, json, os
+import cv2, json, pickle, os
 import gc
 import numpy as np
 from flask import Flask, jsonify, request, render_template, redirect, url_for, send_from_directory
 import tensorflow as tf
 from threading import Thread
 import configparser
-from keras.models import Sequential, load_model
 from mtcnn.mtcnn import MTCNN
 from fine_tuning import FineTuning
 
@@ -19,17 +18,17 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 PREDICT_FOLDER = config['PATH']['generate']
 app.config['PREDICT_FOLDER'] = PREDICT_FOLDER
 
-label_list = json.load(open(config['PATH']['category'], 'r'))
-labels = {int(k): v for k, v in label_list.items()}
+label_list = pickle.load(open('./model/polaris_labels.pkl','rb'))
+labels = {v: k for k, v in label_list.items()}
 graph = tf.get_default_graph()
-ft = FineTuning()
-model = ft.createModel(label_list)
+model_file_name = './model/polaris_facenet_model.h5'
+model = None
 detector = MTCNN()
 
 def load_model():
     global graph, model
     with graph.as_default():
-        model.load_weights(config['PATH']['use_chkpnt'])
+        model = tf.keras.models.load_model(model_file_name, compile=False)
 
 @app.route('/', methods = ["GET", "POST"])
 def root():
