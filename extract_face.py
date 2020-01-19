@@ -1,7 +1,7 @@
 import os, cv2
 from mtcnn.mtcnn import MTCNN
-base_path = './test/images/src/'
-dist_path = './test/images/dist/'
+base_path = './Extract/src/'
+dist_path = './Extract/dist/'
 f_list = os.listdir(base_path)
 
 detector = MTCNN()

@@ -217,7 +217,7 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
 
 if __name__=="__main__":
-    base_path = './Extract'
+    base_path = './Extract/result'
 
     label_dict = {}
     count = 0
@@ -245,7 +245,7 @@ if __name__=="__main__":
     # fit model
     model.fit_generator(
         train_gen,
-        epochs=10,
+        epochs=20,
         steps_per_epoch=int(train_gen.length / batch_size),
         # callbacks=callbacks,
         validation_data=validate_gen,
